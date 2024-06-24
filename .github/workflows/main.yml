@@ -12,10 +12,10 @@ on:
             BASE_PROJECT:
                 description: "Choose Base Project:"
                 required: true
-                default: "LineageOS 20.0"
+                default: "crDroid 13.0"
                 type: choice
                 options:
-                    - "LineageOS 20.0"
+                    - "crDroid 13.0"
                     - "LineageOS 21.0"
                     - "ArrowOS 13.1"
                     - "DerpFest 13.0"
@@ -94,10 +94,10 @@ jobs:
                     export PROJECTID="72"
                     export REPO_INIT="repo init -u https://github.com/LineageOS/android.git -b lineage-21.0 --git-lfs --depth=1"
                   ;;
-                  "LineageOS 20.0")
+                  "crDroid 13.0")
                     export PROJECTFOLDER="/crave-devspaces/Lineage20"
-                    export PROJECTID="36"
-                    export REPO_INIT="repo init -u https://github.com/LineageOS/android.git -b lineage-20.0 --git-lfs --depth=1"
+                    export PROJECTID="53"
+                    export REPO_INIT="repo init -u https://github.com/crdroidandroid/android.git -b 13.0 --git-lfs --depth=1"
                   ;;
                   "CipherOS 14")
                     export PROJECTFOLDER="/crave-devspaces/Cipher14"
@@ -222,8 +222,8 @@ jobs:
                     echo "Git Clone Failed, Downloading Through curl Instead..."; \
                   fi \
 
-                  timeout 1m repo sync --force-sync || { exit_code=$?; [ $exit_code -eq 124 ] || (echo "Error: Process failed with exit code $exit_code"; exit $exit_code); }
-                  du -csh
+                  timeout 1m repo sync --force-sync || { exit_code=$?; [ $exit_code -eq 124 ] || (echo "Error: Process Failed With Exit Code $exit_code"; exit $exit_code); }
+                  du -csh | tail -n 1 | awk '{print $1, "Total Disk Usage"}'
                   rm -rf .repo
               timeout-minutes: 10
 
@@ -356,25 +356,24 @@ jobs:
               if: ${{ github.event.inputs.BUILD_DIFFERENT_ROM != 'skip' }}
               run: |
                   cd $PROJECTFOLDER
-
                   if [ "${{ github.event.inputs.CLEAN_BUILD }}" == "yes" ]; then
                      export CLEAN="clean"
                   fi
 
+                  # Clone Local Manifest Repository
                   crave ${{ secrets.CRAVE_FLAGS }} run --no-patch --${CLEAN} "rm -rf .repo/local_manifests/ ${{ github.event.inputs.REMOVALS }} && \
-                  # Clone local_manifests repository
                   $BUILD_DIFFERENT_ROM ; \
                   git clone ${{ github.event.inputs.LOCAL_MANIFEST }} --depth 1 -b ${{ github.event.inputs.LOCAL_MANIFEST_BRANCH }} .repo/local_manifests && \
 
                   if [ ! \$? == 0 ]; then \
                     curl -o .repo/local_manifests ${{ github.event.inputs.LOCAL_MANIFEST }}; \
-                    echo "Git clone failed, downloading through curl instead..."; \
+                    echo "Git Clone Failed, Downloading Through curl Instead..."; \
                   fi \
 
-                  # Sync the repositories
+                  # Sync The Repositories
                   /opt/crave/resync.sh  && \
 
-                  # Setup build environment
+                  # Setup Build Environment
                   export BUILD_USERNAME=${{ github.actor }} ; \
                   export BUILD_HOSTNAME=crave ; \
                   source build/envsetup.sh && \
@@ -382,7 +381,7 @@ jobs:
                   echo "Repository: ${{ github.repository }}"; \
                   echo "Run ID: ${{ github.run_id }}"; \
 
-                  # Build the ROM
+                  # Build The ROM
                   $LUNCH && \
                   make installclean && \
                   ${{ github.event.inputs.BUILD_COMMAND }}"

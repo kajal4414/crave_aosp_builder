@@ -1,13 +1,15 @@
 #This is a template, modify as you like
 CipherOS:
-  ignoreClientHostname: true 
+  ignoreClientHostname: true
 Arrow OS:
-  ignoreClientHostname: true 
+  ignoreClientHostname: true
 DerpFest-aosp:
-  ignoreClientHostname: true 
+  ignoreClientHostname: true
 LOS 20:
-  ignoreClientHostname: true 
+  ignoreClientHostname: true
 LOS 21:
+  ignoreClientHostname: true
+crDroid:
   ignoreClientHostname: true
 PixelOS:
   ignoreClientHostname: true
