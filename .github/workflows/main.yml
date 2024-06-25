@@ -15,31 +15,26 @@ jobs:
         mkdir -p ~/bin
         curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
         chmod a+rx ~/bin/repo
-        sudo ln -sf "/home/$(whoami)/bin/repo" "/usr/bin/repo"
-      
-    - name: Setup Git
-      run: |
-        git config --global user.name "${{ github.actor }}"
-        git config --global user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+        sudo ln -sf ~/bin/repo /usr/bin/repo
 
-    - name: Configure Crave Environment
+    - name: Crave Environment
       run: |
+        git config user.name kajal4414
+        git config user.email 81718060+kajal4414@users.noreply.github.com
         PROJECTFOLDER="/crave-devspaces/Lineage20"
-        mkdir -p devspace
         sudo mkdir -p /crave-devspaces
-        sudo ln -sf ${pwd}/devspace /crave-devspaces
         sudo chmod 777 /crave-devspaces
         mkdir -p $PROJECTFOLDER/.repo/manifests
         curl -s https://raw.githubusercontent.com/accupara/crave/master/get_crave.sh | bash -s --
-        mv ${PWD}/crave ${HOME}/bin/
-        sudo ln -sf /home/${USER}/bin/crave /usr/bin/crave
-        envsubst < ${PWD}/crave.conf.sample >> ${PWD}/crave.conf
-        rm -rf ${PWD}/crave.conf.sample
+        mv crave ~/bin/
+        sudo ln -sf ~/bin/crave /usr/bin/crave
+        envsubst < crave.conf.sample > crave.conf
+        rm -f crave.conf.sample
         cp crave.conf $PROJECTFOLDER
         cp configs/crave/crave.yaml.aosp $PROJECTFOLDER/.repo/manifests/crave.yaml
       env:
-        CRAVE_USERNAME: ${{  secrets.CRAVE_USERNAME  }}
-        CRAVE_TOKEN: ${{  secrets.CRAVE_TOKEN  }}
+        CRAVE_USERNAME: ${{ secrets.CRAVE_USERNAME }}
+        CRAVE_TOKEN: ${{ secrets.CRAVE_TOKEN }}
 
     - name: Setup Crave
       run: |
@@ -57,7 +52,7 @@ jobs:
         cd $PROJECTFOLDER
         crave run --no-patch --clean "rm -rf .repo/local_manifests && \
         repo init -u https://github.com/crdroidandroid/android.git -b 13.0 --git-lfs && \
-        git clone https://github.com/kajal4414/local_manifests --depth 1 -b lineage-20 .repo/local_manifests && \ 
+        git clone https://github.com/kajal4414/local_manifests --depth 1 -b lineage-20 .repo/local_manifests && \
         /opt/crave/resync.sh && \
         source build/envsetup.sh && \
         lunch lineage_spes-user && \
@@ -67,20 +62,23 @@ jobs:
     - name: Execute Cancelled
       if: ${{ cancelled() }}
       run: |
+        PROJECTFOLDER="/crave-devspaces/Lineage20"
         cd $PROJECTFOLDER
         crave stop --all
 
     - name: Upload Build Artifacts
       run: |
+        PROJECTFOLDER="/crave-devspaces/Lineage20"
         cd $PROJECTFOLDER
         echo "${{ secrets.GITHUB_TOKEN }}" > token.txt
         crave push token.txt -d $(crave ssh -- pwd | grep -v Select | sed -s 's/\r//g')/
-        crave ssh -- "export GH_UPLOAD_LIMIT="${{ secrets.GH_UPLOAD_LIMIT }}"; bash /opt/crave/github-actions/upload.sh '${{ github.run_id }}' '${{ github.event.inputs.DEVICE_NAME }}'  '${{ github.repository }}' '${{ github.event.inputs.PRODUCT_NAME }}-${{ github.run_id }}' '${{ secrets.EXTRA_FILES }}'"
+        crave ssh -- "bash /opt/crave/github-actions/upload.sh '${{ github.run_id }}' 'spes' '${{ github.repository }}' 'lineage_spes-${{ github.run_id }}'"
 
     - name: Display Error Log
       if: ${{ failure() }}
       id: errorlog
       run: |
+        PROJECTFOLDER="/crave-devspaces/Lineage20"
         cd $PROJECTFOLDER
         crave ssh -- sleep 1
         crave pull out/error.log
